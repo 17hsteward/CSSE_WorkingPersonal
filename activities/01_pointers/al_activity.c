@@ -7,7 +7,7 @@
 #define NUM_TO_DELETE 2
 
 // A little pratice using arraylist defined in arraylist.h
-//
+//test
 // STEP 1
 //
 // The given code loads values into the arraylist, but does not

@@ -14,7 +14,6 @@ void add_10_to_count()
         count = count + 1;
     }
     finish_thread();
-
 }
 
 

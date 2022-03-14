@@ -1,7 +1,7 @@
 /*
 Basic Threads - a rudimentary userspace threads library
 
-Author: Buffalo (hewner@rose-hulman.edu) and you!
+Author: Buffalo (hewner@rose-hulman.edu) and Hailey Steward!
 
 Contrary to C convention (but for your convenience) we've documented
 these functions here in the .c file rather than the header.
@@ -34,7 +34,8 @@ annoying.  So please leave this value as it is and use MAX_THREADS
 
 // storage for your thread data
 ucontext_t threads[MAX_THREADS];
-
+ucontext_t child, parent;
+bool child_done;
 
 // add additional constants and globals here as you need
 
@@ -94,7 +95,18 @@ create_new_thread(thread_function());
 
  */
 void create_new_thread(void (*fun_ptr)()) {
-
+    child_done = false;
+    getcontext(&child);
+    child.uc_link = 0;
+    child.uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
+    child.uc_stack.ss_size = THREAD_STACK_SIZE;
+    child.uc_stack.ss_flags = 0;
+    if(child.uc_stack.ss_sp == 0)
+    {
+      perror("malloc: Could not allocate stack");
+      exit(1);
+    }
+    makecontext(&child,fun_ptr,0);
 }
 
 
@@ -161,7 +173,11 @@ schedule_threads()
 printf("All threads finished");
 */
 void schedule_threads() {
-
+     swapcontext(&parent,&child);
+ //   while(!child_done)
+ //  {
+ //    swapcontext(&parent,&child);
+ //  }
 }
 
 /*
@@ -204,7 +220,8 @@ void thread_function()
 
 */
 void yield() {
-
+//      swapcontext(&parent,&child);
+//      return;
 }
 
 /*
@@ -232,5 +249,6 @@ void thread_function()
 
 */
 void finish_thread() {
-
+   child_done = true;
+   swapcontext(&child,&parent);
 }

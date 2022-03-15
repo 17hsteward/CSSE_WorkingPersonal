@@ -37,7 +37,7 @@ bool thread_bool[MAX_THREADS];
 ucontext_t threads[MAX_THREADS];
 ucontext_t child, parent;
 int threadCount = 0;
-int current=0;
+int current=-1;
 int next =0;
 // add additional constants and globals here as you need
 
@@ -66,6 +66,7 @@ void initialize_basic_threads() {
  //  for(int i = 0; i< MAX_THREADS; i++){
 //        thread_bool[i] = false;
  //  }
+current = -1;
 }
 
 /*
@@ -117,18 +118,12 @@ void create_new_thread(void (*fun_ptr)()) {
     }
     makecontext(&child,fun_ptr,0);
     int index =0;
-    int j = 0;
-    while(thread_bool[j]!= false){
-       j++;
+    while(thread_bool[index] == true){
+       index++;
     }
-     index = j;
      thread_bool[index] = true;
      threads[index] = child;
      threadCount++;
-     if(threadCount>1)
-     {
-      next = index;
-     }
 }
 
 
@@ -195,6 +190,16 @@ schedule_threads()
 printf("All threads finished");
 */
 void schedule_threads() {
+     current = current + 1;
+     if(current == MAX_THREADS){
+        current = 0;
+     }
+     while(thread_bool[current]!=true){
+        current = current +1;
+        if(current==MAX_THREADS){
+          current =0;
+        }
+     }
      swapcontext(&parent,&threads[current]);
 }
 
@@ -238,7 +243,8 @@ void thread_function()
 
 */
 void yield() {
-//  if(current = next){
+   swapcontext(&parent,&threads[current]);
+//  if(current = next)
 //    schedule_threads();
 //  }
 //  else{
@@ -282,20 +288,5 @@ void thread_function()
 void finish_thread() {
    thread_bool[current] = false;
    threadCount--;
-   if(threadCount != 0)
-   {
-     current = next;
-     int k = 0;
-     while(thread_bool[k]==false){
-       k++;
-       if( k == MAX_THREADS)
-       {
-         k =0;
-       }
-     }
-     next = k;
-     schedule_threads();
-   }
-  else
   swapcontext(&threads[current],&parent);
 }

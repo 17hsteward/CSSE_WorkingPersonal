@@ -33,10 +33,12 @@ annoying.  So please leave this value as it is and use MAX_THREADS
 #define MAX_THREADS 5
 
 // storage for your thread data
+bool thread_bool[MAX_THREADS];
 ucontext_t threads[MAX_THREADS];
 ucontext_t child, parent;
-bool child_done;
-
+int threadCount = 0;
+int current=0;
+int next =0;
 // add additional constants and globals here as you need
 
 
@@ -60,7 +62,10 @@ blank.
 
  */
 void initialize_basic_threads() {
-
+//   threadCount = 0;
+ //  for(int i = 0; i< MAX_THREADS; i++){
+//        thread_bool[i] = false;
+ //  }
 }
 
 /*
@@ -95,7 +100,6 @@ create_new_thread(thread_function());
 
  */
 void create_new_thread(void (*fun_ptr)()) {
-    child_done = false;
     getcontext(&child);
     child.uc_link = 0;
     child.uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
@@ -106,7 +110,25 @@ void create_new_thread(void (*fun_ptr)()) {
       perror("malloc: Could not allocate stack");
       exit(1);
     }
+    if(threadCount == MAX_THREADS)
+    {
+      perror("Too many active threads");
+      exit(2);
+    }
     makecontext(&child,fun_ptr,0);
+    int index =0;
+    int j = 0;
+    while(thread_bool[j]!= false){
+       j++;
+    }
+     index = j;
+     thread_bool[index] = true;
+     threads[index] = child;
+     threadCount++;
+     if(threadCount>1)
+     {
+      next = index;
+     }
 }
 
 
@@ -173,11 +195,7 @@ schedule_threads()
 printf("All threads finished");
 */
 void schedule_threads() {
-     swapcontext(&parent,&child);
- //   while(!child_done)
- //  {
- //    swapcontext(&parent,&child);
- //  }
+     swapcontext(&parent,&threads[current]);
 }
 
 /*
@@ -207,21 +225,34 @@ void thread_function()
 {
     for(int i = 0; i < 200; i++) {
         printf( "working\n" );
-        
+
         // allow other threads to do some work too
         yield();
         // ok, switched back, better do some more work
     }
     printf( "done\n" );
-    
+
     // like yield but never switches back
     finish_thread();
 }
 
 */
 void yield() {
-//      swapcontext(&parent,&child);
-//      return;
+//  if(current = next){
+//    schedule_threads();
+//  }
+//  else{
+//  current = next;
+//  int k = current+1;
+//  while(thread_bool[k]==false){
+//     k++;
+//     if(k == MAX_THREADS)
+//     {
+//      k=0;
+//     }
+//  }
+//   next = k;
+//   schedule_threads();}
 }
 
 /*
@@ -249,6 +280,22 @@ void thread_function()
 
 */
 void finish_thread() {
-   child_done = true;
-   swapcontext(&child,&parent);
+   thread_bool[current] = false;
+   threadCount--;
+   if(threadCount != 0)
+   {
+     current = next;
+     int k = 0;
+     while(thread_bool[k]==false){
+       k++;
+       if( k == MAX_THREADS)
+       {
+         k =0;
+       }
+     }
+     next = k;
+     schedule_threads();
+   }
+  else
+  swapcontext(&threads[current],&parent);
 }

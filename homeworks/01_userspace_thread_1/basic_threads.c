@@ -61,10 +61,11 @@ blank.
 
  */
 void initialize_basic_threads() {
-//   threadCount = 0;
- //  for(int i = 0; i< MAX_THREADS; i++){
-//        thread_bool[i] = false;
- //  }
+   threadCount = 0;
+   for(int i = 0; i< MAX_THREADS; i++){
+        thread_bool[i] = false;
+  }
+   threadCount = 0;
    current = 0;
 }
 
@@ -100,9 +101,13 @@ create_new_thread(thread_function());
 
  */
 void create_new_thread(void (*fun_ptr)()){
-    int index = 0;
-    while(thread_bool[index] == true){
+    int index = current;
+    while(thread_bool[index] == true&&threadCount!=MAX_THREADS){
         index = index + 1;
+        if(index==MAX_THREADS)
+        {
+          index = 0;
+         }
     }
      thread_bool[index] = true;
 
@@ -197,14 +202,20 @@ printf("All threads finished");
 */
 void schedule_threads() {
    while(threadCount!=0 ){
-      if(thread_bool[current]!=true){
-        current = current+1;
-      }
-      if(current==MAX_THREADS){
-          current =0;
-        }
+    //  if(thread_bool[current]!=true){
+   //     current = current+1;
+   //   }
+  //    if(current==MAX_THREADS){
+   //       current =0;
+  //      }
       swapcontext(&parent,&threads[current]);
       current = current + 1;
+      if(thread_bool[current]!=true){
+        current=current+1;
+       }
+      if(current == MAX_THREADS){
+        current = 0;
+      }
    }
 }
 
@@ -248,7 +259,7 @@ void thread_function()
 
 */
 void yield() {
-//   swapcontext(&parent,&threads[current]);
+//   swapcontext(&threads[current],&parent);
 }
 
 /*

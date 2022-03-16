@@ -35,10 +35,9 @@ annoying.  So please leave this value as it is and use MAX_THREADS
 // storage for your thread data
 bool thread_bool[MAX_THREADS];
 ucontext_t threads[MAX_THREADS];
-ucontext_t child, parent;
+ucontext_t parent;
 int threadCount = 0;
-int current=-1;
-int next =0;
+int current=0;
 // add additional constants and globals here as you need
 
 
@@ -66,7 +65,7 @@ void initialize_basic_threads() {
  //  for(int i = 0; i< MAX_THREADS; i++){
 //        thread_bool[i] = false;
  //  }
-current = -1;
+   current = 0;
 }
 
 /*
@@ -100,13 +99,19 @@ void thread_function()
 create_new_thread(thread_function());
 
  */
-void create_new_thread(void (*fun_ptr)()) {
-    getcontext(&child);
-    child.uc_link = 0;
-    child.uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
-    child.uc_stack.ss_size = THREAD_STACK_SIZE;
-    child.uc_stack.ss_flags = 0;
-    if(child.uc_stack.ss_sp == 0)
+void create_new_thread(void (*fun_ptr)()){
+    int index = 0;
+    while(thread_bool[index] == true){
+        index = index + 1;
+    }
+     thread_bool[index] = true;
+
+    getcontext(&threads[index]);
+    threads[index].uc_link = 0;
+    threads[index].uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
+    threads[index].uc_stack.ss_size = THREAD_STACK_SIZE;
+    threads[index].uc_stack.ss_flags = 0;
+    if(threads[index].uc_stack.ss_sp == 0)
     {
       perror("malloc: Could not allocate stack");
       exit(1);
@@ -116,14 +121,15 @@ void create_new_thread(void (*fun_ptr)()) {
       perror("Too many active threads");
       exit(2);
     }
-    makecontext(&child,fun_ptr,0);
-    int index =0;
-    while(thread_bool[index] == true){
-       index++;
-    }
-     thread_bool[index] = true;
-     threads[index] = child;
-     threadCount++;
+    makecontext(&threads[index],fun_ptr,0);
+    threadCount = threadCount + 1;
+  //  int index =0;
+  //  while(thread_bool[index] == true){
+  //     index = index + 1;
+  //  }
+  //   thread_bool[index] = true;
+ //    threads[index] = child;
+//     threadCount = threadCount + 1;
 }
 
 
@@ -190,17 +196,16 @@ schedule_threads()
 printf("All threads finished");
 */
 void schedule_threads() {
-     current = current + 1;
-     if(current == MAX_THREADS){
-        current = 0;
-     }
-     while(thread_bool[current]!=true){
-        current = current +1;
-        if(current==MAX_THREADS){
+   while(threadCount!=0 ){
+      if(thread_bool[current]!=true){
+        current = current+1;
+      }
+      if(current==MAX_THREADS){
           current =0;
         }
-     }
-     swapcontext(&parent,&threads[current]);
+      swapcontext(&parent,&threads[current]);
+      current = current + 1;
+   }
 }
 
 /*
@@ -243,22 +248,7 @@ void thread_function()
 
 */
 void yield() {
-   swapcontext(&parent,&threads[current]);
-//  if(current = next)
-//    schedule_threads();
-//  }
-//  else{
-//  current = next;
-//  int k = current+1;
-//  while(thread_bool[k]==false){
-//     k++;
-//     if(k == MAX_THREADS)
-//     {
-//      k=0;
-//     }
-//  }
-//   next = k;
-//   schedule_threads();}
+//   swapcontext(&parent,&threads[current]);
 }
 
 /*
@@ -287,6 +277,6 @@ void thread_function()
 */
 void finish_thread() {
    thread_bool[current] = false;
-   threadCount--;
-  swapcontext(&threads[current],&parent);
+   threadCount = threadCount - 1;
+   swapcontext(&threads[current],&parent);
 }

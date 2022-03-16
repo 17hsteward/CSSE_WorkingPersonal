@@ -101,33 +101,31 @@ create_new_thread(thread_function());
 
  */
 void create_new_thread(void (*fun_ptr)()){
-    int index = current;
-    while(thread_bool[index] == true&&threadCount!=MAX_THREADS){
-        index = index + 1;
-        if(index==MAX_THREADS)
-        {
-          index = 0;
-         }
+    int ind = 0;
+ //   threadCount = threadCount +1;
+    if(threadCount >= MAX_THREADS)
+    {
+//      threadCount = threadCount - 1;
+      perror("Too many active threads");
+      exit(2);
     }
-     thread_bool[index] = true;
+    while(thread_bool[ind] == true){
+        ind = (ind + 1)%MAX_THREADS;
+    }
+     thread_bool[ind] = true;
 
-    getcontext(&threads[index]);
-    threads[index].uc_link = 0;
-    threads[index].uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
-    threads[index].uc_stack.ss_size = THREAD_STACK_SIZE;
-    threads[index].uc_stack.ss_flags = 0;
-    if(threads[index].uc_stack.ss_sp == 0)
+    getcontext(&threads[ind]);
+    threads[ind].uc_link = 0;
+    threads[ind].uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
+    threads[ind].uc_stack.ss_size = THREAD_STACK_SIZE;
+    threads[ind].uc_stack.ss_flags = 0;
+    if(threads[ind].uc_stack.ss_sp == 0)
     {
       perror("malloc: Could not allocate stack");
       exit(1);
     }
-    if(threadCount == MAX_THREADS)
-    {
-      perror("Too many active threads");
-      exit(2);
-    }
-    makecontext(&threads[index],fun_ptr,0);
-    threadCount = threadCount + 1;
+    makecontext(&threads[ind],fun_ptr,0);
+    threadCount ++;
   //  int index =0;
   //  while(thread_bool[index] == true){
   //     index = index + 1;
@@ -257,7 +255,7 @@ void thread_function()
     finish_thread();
 }
 
-*/
+x*/
 void yield() {
 //   swapcontext(&threads[current],&parent);
 }

@@ -38,7 +38,7 @@ ucontext_t threads[MAX_THREADS];
 ucontext_t parent;
 int threadCount = 0;
 int current=0;
-
+int thread_stat[MAX_THREADS];
 // add additional constants and globals here as you need
 
 
@@ -68,6 +68,9 @@ void initialize_basic_threads() {
   }
    threadCount = 0;
    current = 0;
+   for(int i =0; i<MAX_THREADS; i++){
+         thread_stat[i] = 0;
+   }
 }
 
 /*
@@ -147,6 +150,7 @@ void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
       ind = (ind + 1)%MAX_THREADS;
    }
    thread_bool[ind] = true;
+   thread_stat[ind] = 1;
    getcontext(&threads[ind]);
    threads[ind].uc_link = 0;
    threads[ind].uc_stack.ss_sp = malloc(THREAD_STACK_SIZE);
@@ -158,7 +162,6 @@ void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
     exit(1);
    }
    void(*cast_ptr)() =  helper_func;
-//   void(*test_ptr)() = helper_func(cast_ptr,parameter);
    makecontext(&threads[ind],cast_ptr,2,fun_ptr,parameter);
    threadCount++;
 }
@@ -196,7 +199,8 @@ schedule_threads()
 printf("All threads finished");
 */
 void schedule_threads() {
-  while(threadCount!=0 ){
+
+ while(threadCount!=0 ){ 
     //  if(thread_bool[current]!=true){
    //     current = current+1;
    //   }
@@ -204,6 +208,10 @@ void schedule_threads() {
    //       current =0;
   //      }
       swapcontext(&parent,&threads[current]);
+        if(thread_stat[current] == 2){
+          thread_stat[current] = 0;
+          free(threads[current].uc_stack.ss_sp );
+       }
       current = current + 1;
       while(thread_bool[current]!=true&&threadCount!=0){
         current=(current+1)%MAX_THREADS;
@@ -284,5 +292,6 @@ void thread_function()
 void finish_thread() {
    thread_bool[current] = false;
    threadCount = threadCount - 1;
+   thread_stat[current] = 2;
    swapcontext(&threads[current],&parent);
 }

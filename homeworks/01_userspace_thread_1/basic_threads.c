@@ -38,6 +38,7 @@ ucontext_t threads[MAX_THREADS];
 ucontext_t parent;
 int threadCount = 0;
 int current=0;
+
 // add additional constants and globals here as you need
 
 
@@ -130,8 +131,8 @@ schedule_threads();
 
 
  */
-void helper_func(void (*fun_ptr), void* parameter){
-   makecontext(&threads[current],fun_ptr,1,parameter);
+void helper_func(void (*fun_ptr)(void*), void* parameter){
+   fun_ptr(parameter);
    finish_thread();
 }
 void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
@@ -156,8 +157,9 @@ void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
     perror("malloc: Could not allocate stack");
     exit(1);
    }
-   void(*cast_ptr)() = (void(*)()) fun_ptr;
-   makecontext(&threads[ind],helper_func(cast_ptr,parameter),0);
+   void(*cast_ptr)() =  helper_func;
+//   void(*test_ptr)() = helper_func(cast_ptr,parameter);
+   makecontext(&threads[ind],cast_ptr,2,fun_ptr,parameter);
    threadCount++;
 }
 
@@ -194,7 +196,7 @@ schedule_threads()
 printf("All threads finished");
 */
 void schedule_threads() {
-   while(threadCount!=0 ){
+  while(threadCount!=0 ){
     //  if(thread_bool[current]!=true){
    //     current = current+1;
    //   }

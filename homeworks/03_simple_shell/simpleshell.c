@@ -14,6 +14,7 @@ int main() {
     char *parsed_command[2];
     //takes at most two input arguments
     // infinite loop but ^C quits
+    
     while (1) {
         printf("SHELL%% ");
         fgets(command, 82, stdin);
@@ -23,6 +24,7 @@ int main() {
             if(command[len_1] == ' ')
                 break;
         }
+        
         parsed_command[0] = command;
         if(len_1 == strlen(command)){
             printf("Command is '%s' with no arguments\n", parsed_command[0]); 
@@ -32,6 +34,16 @@ int main() {
             parsed_command[1] = command + len_1 + 1;
             printf("Command is '%s' with argument '%s'\n", parsed_command[0], parsed_command[1]); 
         }
+        pid_t pid = fork();
+        if(pid == 0){
+        execlp(command,parsed_command[0],parsed_command[1],NULL);
+        exit(3);
+        }
+        else{
+            int status;
+           wait(&status); 
+        }
+        }
 
     }
-}
+

@@ -12,6 +12,8 @@ these functions here in the .c file rather than the header.
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <signal.h>
 #include "preempt_threads.h"
 
 // 64kB stack
@@ -135,8 +137,10 @@ schedule_threads();
 
  */
 void helper_func(void (*fun_ptr)(void*), void* parameter){
+    unmask();
    fun_ptr(parameter);
    finish_thread();
+   
 }
 void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
    int ind = 0;
@@ -164,6 +168,7 @@ void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
    void(*cast_ptr)() =  helper_func;
    makecontext(&threads[ind],cast_ptr,2,fun_ptr,parameter);
    threadCount++;
+   
 }
 
 
@@ -198,17 +203,31 @@ printf("Starting threads...");
 schedule_threads()
 printf("All threads finished");
 */
+void mask(){
+ sigset_t mask;
+ sigemptyset (&mask);
+ sigaddset (&mask, SIGALRM);
+ if(sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
+    perror ("sigprocmask");
+ }
+}
+void unmask(){
+ sigset_t mask;
+ sigemptyset (&mask);
+ sigaddset (&mask, SIGALRM);
+ if(sigprocmask(SIG_UNBLOCK, &mask, NULL) < 0) {
+    perror ("sigprocmask");
+ }
+}
 void schedule_threads_with_preempt(int usecs) {
-
+signal(SIGALRM,yield);
  while(threadCount!=0 ){ 
-    //  if(thread_bool[current]!=true){
-   //     current = current+1;
-   //   }
-  //    if(current==MAX_THREADS){
-   //       current =0;
-  //      }
+      //Should go in helper and yield but didn't know how to pass in usecs
+      ualarm(usecs,0);
+      mask();
       swapcontext(&parent,&threads[current]);
-        if(thread_stat[current] == 2){
+
+      if(thread_stat[current] == 2){
           thread_stat[current] = 0;
           free(threads[current].uc_stack.ss_sp );
        }

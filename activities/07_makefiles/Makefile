@@ -22,3 +22,8 @@
 
 all: almain.bin
 
+almain.bin: arraylist.c almain.c arraylist.h
+	gcc -o almain.bin arraylist.c almain.c arraylist.h
+.PHONY: clean
+clean:
+	rm -f almain.bin

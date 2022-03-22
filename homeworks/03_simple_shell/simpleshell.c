@@ -11,6 +11,7 @@
 void waits(int signum){
     int status;
     wait(&status);
+    printf("Background command finished\n");
 }
 
 int main() {
@@ -46,17 +47,17 @@ int main() {
           char* commandBG = command + 2;
           pid_t pid_1 = fork();
           if(pid_1==0){
-             pid_t pid_3 = fork();
-             if(pid_3==0){
+             //pid_t pid_3 = fork();
+            //  if(pid_3==0){
                  execlp(commandBG,commandBG,parsed_command[1],NULL);
                  exit(4);
-             }
-             else{
-             int status;
-             wait(&status);
-             printf("Background command finished\n");
-             exit(5);
-              }
+            //  }
+            //  else{
+            //  int status;
+            //  wait(&status);
+            //  printf("Background command finished\n");
+            //  exit(5);
+            //   }
           }
           signal(SIGCHLD,waits);
         }

@@ -41,7 +41,7 @@ ucontext_t parent;
 int threadCount = 0;
 int current=0;
 int thread_stat[MAX_THREADS];
-int tsecs;
+int tsecs;//
 // add additional constants and globals here as you need
 
 

@@ -41,6 +41,7 @@ ucontext_t parent;
 int threadCount = 0;
 int current=0;
 int thread_stat[MAX_THREADS];
+int tsecs;
 // add additional constants and globals here as you need
 
 
@@ -106,6 +107,22 @@ void thread_function()
 create_new_thread(thread_function());
 
  */
+ void mask(){
+ sigset_t mask;
+ sigemptyset (&mask);
+ sigaddset (&mask, SIGALRM);
+ if(sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
+    perror ("sigprocmask");
+ }
+}
+void unmask(){
+ sigset_t mask;
+ sigemptyset (&mask);
+ sigaddset (&mask, SIGALRM);
+ if(sigprocmask(SIG_UNBLOCK, &mask, NULL) < 0) {
+    perror ("sigprocmask");
+ }
+}
 void create_new_thread(void (*fun_ptr)()){
     create_new_parameterized_thread(fun_ptr,NULL);
 }
@@ -137,12 +154,14 @@ schedule_threads();
 
  */
 void helper_func(void (*fun_ptr)(void*), void* parameter){
-    unmask();
+   ualarm(tsecs,0);
+   unmask();
    fun_ptr(parameter);
    finish_thread();
    
 }
 void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
+   mask();
    int ind = 0;
    if(threadCount >= MAX_THREADS)
    {
@@ -168,10 +187,13 @@ void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
    void(*cast_ptr)() =  helper_func;
    makecontext(&threads[ind],cast_ptr,2,fun_ptr,parameter);
    threadCount++;
-   
+   unmask();
 }
 
-
+void yielding(){
+   swapcontext(&threads[current],&parent);
+   ualarm(tsecs,0);
+}
 /*
 schedule_threads
 
@@ -203,30 +225,14 @@ printf("Starting threads...");
 schedule_threads()
 printf("All threads finished");
 */
-void mask(){
- sigset_t mask;
- sigemptyset (&mask);
- sigaddset (&mask, SIGALRM);
- if(sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
-    perror ("sigprocmask");
- }
-}
-void unmask(){
- sigset_t mask;
- sigemptyset (&mask);
- sigaddset (&mask, SIGALRM);
- if(sigprocmask(SIG_UNBLOCK, &mask, NULL) < 0) {
-    perror ("sigprocmask");
- }
-}
-void schedule_threads_with_preempt(int usecs) {
-signal(SIGALRM,yield);
- while(threadCount!=0 ){ 
-      //Should go in helper and yield but didn't know how to pass in usecs
-      ualarm(usecs,0);
-      mask();
-      swapcontext(&parent,&threads[current]);
 
+void schedule_threads_with_preempt(int usecs) {
+ tsecs = usecs;
+signal(SIGALRM,yielding);
+mask();
+ while(threadCount!=0 ){ 
+      
+      swapcontext(&parent,&threads[current]);
       if(thread_stat[current] == 2){
           thread_stat[current] = 0;
           free(threads[current].uc_stack.ss_sp );
@@ -239,6 +245,9 @@ signal(SIGALRM,yield);
         current = 0;
       }
    }
+    signal(SIGALRM, SIG_IGN);  //ignore the alarm signal
+    unmask();
+    ualarm(0,0);
 }
 
 /*
@@ -279,10 +288,14 @@ void thread_function()
     finish_thread();
 }
 
-x*/
+*/
 void yield() {
+   mask();
    swapcontext(&threads[current],&parent);
+   ualarm(tsecs,0);
+   unmask();
 }
+
 
 /*
 finish_thread
@@ -309,6 +322,7 @@ void thread_function()
 
 */
 void finish_thread() {
+   mask();
    thread_bool[current] = false;
    threadCount = threadCount - 1;
    thread_stat[current] = 2;

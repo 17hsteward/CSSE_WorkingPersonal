@@ -199,7 +199,8 @@ os_bool_t fetch_inode(os_uint32_t inode_number, int fd,
   // Remember that the you stashed the number of inodes per
   // blockgroup in "metadata".  Also note that the first inode
   // has number 1, **not** number 0.  (Thanks a lot, ext2!)
-  os_uint32_t blockgroup_num = 0xDEADBEEF;  // you must fix this.
+  os_uint32_t actual_inode_num = inode_number -1 ;
+  os_uint32_t blockgroup_num = actual_inode_num/metadata->inodes_per_group; 
 
   // Step 2.  Figure out the offset of the inode within
   // the group (i.e., is this the 0th inode in the group?

@@ -1,15 +1,19 @@
 Be sure to write your name(s) in this file.
-
+Hailey Steward
 Answer the questions posted in the instructions here.
 
-Question 1:
+Question 1: 
 
-(a)
+(a)What error is received?
+    Currently the error received is a segmentation fault.
 
+(b)Where (what line number and which instruction) is the error received?
+    This error is received at in the function fgetline at line 30 in file-functions.c. The instruction which seems to error
+    is fgets(line, max, file) in the if loop conditional.
 
-(b)
-
-Problem 2:
-
+Problem 2: What is the root cause of the error in Problem 1? 
+    The root cause of the error seems to be that the function fgetlines which seems to be unable
+    to access memory at the provided address which causes the segmentation fault when the program 
+    tries to calloc.
 Problem 3:
 

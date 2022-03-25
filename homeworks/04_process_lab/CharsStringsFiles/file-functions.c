@@ -29,7 +29,7 @@ void printFileToConsole1(char *name) {
 int fgetline(FILE *file, char *line, int max) {
   if (fgets(line, max, file) == NULL) {
     return 0;
-  } else {
+  } else {  
     return strlen(line);
   }
 }
@@ -49,6 +49,7 @@ int fgetlines(char* fileName, char ***fileLines) {
 
   int  len, e, lineCount = 0;
   char *nextLine = NULL;
+  nextLine = calloc(128,sizeof(char));
   FILE *filePtr = NULL;
   char **reallocResult = NULL;
   char **result = (char **) calloc(MAX_LINES, sizeof(char *));
@@ -61,7 +62,6 @@ int fgetlines(char* fileName, char ***fileLines) {
     free(result);
     return 0;
   }
-
   len = fgetline(filePtr, nextLine, MAX_LINE_LENGTH);
   while (len && lineCount < MAX_LINES) {
     result[lineCount] = nextLine;

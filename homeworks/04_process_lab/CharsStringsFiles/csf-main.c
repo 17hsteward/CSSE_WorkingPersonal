@@ -317,7 +317,7 @@ int main(int argc, char *argv[]) {
   printFileToConsole2(fileNames[1]);
 
   printf("\n\nBy whole file:\n");
-  printFileToConsole3(fileNames[2]);
+  printFileToConsole3(fileNames[1]);
 
   /*
    * These test functions test each of your required operations

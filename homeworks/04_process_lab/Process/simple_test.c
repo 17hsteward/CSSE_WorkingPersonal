@@ -1,8 +1,10 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define simple_assert(message, test) do { if (!(test)) return message; } while (0)
 #define TEST_PASSED NULL
@@ -21,6 +23,7 @@ void add_test(char* (*test_func)()) {
         printf("exceeded max possible tests");
         exit(1);
     }
+
     test_funcs[num_tests] = test_func;
     num_tests++;
 }
@@ -40,38 +43,79 @@ void setup() {
 
 char* test1();
 
-void* run_test(void *test_to_run_void) {
-    setup();
-    char* (*test_func)() = test_to_run_void;
-    return test_func();
+// void* run_test(void *test_to_run_void) {
+//     setup();
+//     char* (*test_func)() = test_to_run_void;
+//     return test_func();
+// }
+void timeout(){
+    exit(2);
 }
-
 void run_all_tests() {
-
-    pthread_t tests[100];
-    
-    
+    setup();
+    signal(SIGALRM,timeout);
+    int fd[num_tests][2];
+    int pids[num_tests];
     for(int i = 0; i < num_tests; i++) {
-        if(pthread_create(&tests[i], NULL, &run_test, test_funcs[i])) {
-
-            printf("Error creating thread\n");
-            exit(2);
-
+        pipe(fd[i]);
+        int pid = fork();
+        pids[i] = pid;
+        if(pid == 0){
+          close(fd[i][0]);
+           alarm(3);
+          char* tresult = test_funcs[i]();
+          if(tresult == TEST_PASSED){
+              close(fd[i][1]);
+              exit(0);
+          }
+          else{
+              write(fd[i][1],tresult,strlen(tresult)+1);
+              close(fd[i][1]);
+              exit(1);
+          }
         }
     }
-    for(int i = 0; i < num_tests; i++) {
-        char* result = NULL;
-        if(pthread_join(tests[i],(void**) &result)) {
-            printf("Error joining thread\n");
-            exit(2);
+     for(int i = 0; i < num_tests; i++) {
+        int status;
+        close(fd[i][1]);
+        char buf[128];
+        int bufleng;
+        bufleng = read(fd[i][0],buf,128);
+        close(fd[i][0]);
+        waitpid(pids[i],&status,0);
+        if(WIFEXITED(status)==0){
+            printf("Test Crashed\n");
         }
-        if(result == TEST_PASSED) {
+        else if(WEXITSTATUS(status)==0){
             printf("Test Passed\n");
-        } else {
-            printf("Test Failed: %s\n",result);
         }
+        else if(WEXITSTATUS(status)==1){
+            printf("Test Failed: %s\n", buf);
+        }
+        else if(WEXITSTATUS(status)==2){
+             printf("Test Time Outa\n");
+        }
+     }
+    //     if(pthread_create(&tests[i], NULL, &run_test, test_funcs[i])) {
 
-    }
+    //         printf("Error creating thread\n");
+    //         exit(2);
+
+    //     }
+    // }
+    // for(int i = 0; i < num_tests; i++) {
+    //     char* result = NULL;
+    //     if(pthread_join(tests[i],(void**) &result)) {
+    //         printf("Error joining thread\n");
+    //         exit(2);
+    //     }
+    //     if(result == TEST_PASSED) {
+    //         printf("Test Passed\n");
+    //     } else {
+    //         printf("Test Failed: %s\n",result);
+    //     }
+
+    // }
         
 }
 
@@ -160,8 +204,8 @@ void main() {
     add_test(test1);
     add_test(test2);
     add_test(test3);
-    // add_test(test4); // uncomment for Step 4
-    // add_test(test5); // uncomment for Step 5
+    add_test(test4); // uncomment for Step 4
+    add_test(test5); // uncomment for Step 5
     run_all_tests();
     
 }

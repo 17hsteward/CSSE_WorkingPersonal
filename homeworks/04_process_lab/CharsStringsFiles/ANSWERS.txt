@@ -12,8 +12,7 @@ Question 1:
     is fgets(line, max, file) in the if loop conditional.
 
 Problem 2: What is the root cause of the error in Problem 1? 
-    The root cause of the error seems to be that the function fgetlines which seems to be unable
-    to access memory at the provided address which causes the segmentation fault when the program 
-    tries to calloc.
-Problem 3:
+    Newline in fgetlines does not allocate memory for itself.
 
+Problem 3:
+    Assigned a calloc to the newline in fgetlines function which allocates memory it needs.

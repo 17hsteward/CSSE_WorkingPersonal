@@ -48,7 +48,16 @@ int main(int argc, char** argv) {
 
     int fork_result;
     
-    
+    for( int i = 0; i<num_files_to_create;i++){
+        fork_result=fork();
+        if (fork_result < 0){
+            perror("fork error");
+            exit(4);
+        }
+        else if(fork_result == 0){
+            
+        }
+    }
     char filename[FILENAME_LEN + 1];
     filename[FILENAME_LEN] = 0; //null at end so its a vaid string
                                 //after reading
@@ -69,7 +78,9 @@ int main(int argc, char** argv) {
         }
         setup_for_processing();
         process_file(filename);
+        
     }
-    
+     
+    wait(NULL);
     printf("master processor finished. %d files processed successfully.\n", num_files_to_create);
 }

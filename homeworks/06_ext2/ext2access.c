@@ -571,6 +571,7 @@ os_uint32_t scan_dir(unsigned char *directory,
 
       struct os_direntry_t *current_entry_p = (struct os_direntry_t *) (directory + current_offset);
       if(current_entry_p->inode==0){
+        current_entry_p += current_entry_p->rec_len;
         continue;
       }
       
@@ -579,16 +580,21 @@ os_uint32_t scan_dir(unsigned char *directory,
     // directory).  If so, skip to the next iteration of the while
     // loop (using "continue;") after properly incrementing
     // current_offset (use rec_len).
-
+   
     // Step 3.  Compare the name in the directory entry to
     // "filename".  Note that you cannot rely on the name in
     // the directory entry to be NULL terminated, so you can't
     // use strcmp().  If the name matches, you're done -- return its
     // inode number.
-    
+     if(strlen(filename)==current_entry_p->name_len){
+       if(strncmp(filename,current_entry_p,current_entry_p->name_len) == 0 ){
+         return current_entry_p->inode;
+       }
+     }
     // Step 4.  If you didn't find it, add the appropriate amount to
     // current_offset, and fall into the next iteration of the while
     // loop.
+    current_entry_p += current_entry_p->rec_len;
   }
 
   // Step N:  fell off the end of the directory file, and didn't find

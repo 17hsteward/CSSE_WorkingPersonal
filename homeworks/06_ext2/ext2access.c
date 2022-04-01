@@ -587,7 +587,7 @@ os_uint32_t scan_dir(unsigned char *directory,
     // use strcmp().  If the name matches, you're done -- return its
     // inode number.
      if(strlen(filename)==current_entry_p->name_len){
-       if(strncmp(filename,current_entry_p,current_entry_p->name_len) == 0 ){
+       if(strcmp(filename,current_entry_p) >= 0 ){
          return current_entry_p->inode;
        }
      }

@@ -587,7 +587,7 @@ os_uint32_t scan_dir(unsigned char *directory,
     // use strcmp().  If the name matches, you're done -- return its
     // inode number.
      if(strlen(filename)==current_entry_p->name_len){
-       if(strcmp(filename,current_entry_p) >= 0 ){
+       if(strncmp(current_entry_p->file_name,filename,strlen(filename)) == 0 ){
          return current_entry_p->inode;
        }
      }
@@ -602,7 +602,16 @@ os_uint32_t scan_dir(unsigned char *directory,
   return 0;
 }
 
-
+char* findDirAtLevel(char* path, char* dir){
+     memset(dir,0,strlen(dir));
+     int i = 0;
+     while (path[i]!='/'&&i<strlen(path)){
+       dir[i]=path[i];
+       i++;
+     }
+     dir[i+1]='\0';
+     return dir;
+}
 // Given an absolute path to a file (e.g. /foo/bar/baz.txt - note
 // initial '/') returns the inode number of the file, or 0 if the
 // file can't be found.
@@ -619,7 +628,7 @@ os_uint32_t path_to_inode_num(char* path, int fd, struct os_fs_metadata_t *metad
   char path_copy[strlen(path) + 1];
   strncpy(path_copy, path, strlen(path) + 1);
   char* path_remaining = path_copy;
-
+  
   // file_read mallocs the data it finds, but we still need a place to
   // put the output pointer
   unsigned char* buffer;
@@ -632,7 +641,24 @@ os_uint32_t path_to_inode_num(char* path, int fd, struct os_fs_metadata_t *metad
   // for me it's handy to omit the initial "/" from the path, because
   // we are already starting at the root
   path_remaining++;
-
+  int currentDirectory = root;
+  char Directory[strlen(path_remaining)+1];
+  while(1){
+  if(!file_read(fd, currentDirectory, metadata, &inode, &buffer)){
+     return 0;
+  }
+  findDirAtLevel(path_remaining,Directory);
+   
+  currentDirectory = scan_dir(buffer, inode.i_size, Directory);
+ 
+  free(buffer);
+  if(strchr(path_remaining,'/')==NULL){
+     printf("returning current %d\n", currentDirectory);
+     return currentDirectory;
+  }
+     
+    path_remaining = strchr(path_remaining,'/')+1;
+  }
   //for each / seperated entry in the path
   //1. Use file_read to read the current directory data
   //2. Use scan_dir to search for the entry you're looking for

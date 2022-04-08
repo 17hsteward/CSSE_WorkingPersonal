@@ -22,30 +22,50 @@ Makefile provided.
 #include <sys/wait.h>
 #include <pthread.h>
 
+unsigned long long int target;
+int numThreads;
 
+void factor(int ID){
+   for (int i = 2+ID; i <= target/2 ; i = i + numThreads) {
+    /* You'll want to keep this testing line in.  Otherwise it goes so
+       fast it can be hard to detect your code is running in
+       parallel. Also test with a large number (i.e. > 3000) */
+    printf("thread %d testing %llu\n",ID+1,i);
+    if (target % i == 0) {
+      printf("%llu is a factor\n", i);
+    }
+  }
+}
 int main(void) {
   /* you can ignore the linter warning about this */
-  unsigned long long int target, i, start = 0;
-  int numThreads;
+  unsigned long long int i, start = 0;
+  
+  pthread_t tid[50];
   printf("Give a number to factor.\n");
   scanf("%llu", &target);
-
   printf("How man threads should I create?\n");
   scanf("%d", &numThreads);
   if (numThreads > 50 || numThreads < 1) {
     printf("Bad number of threads!\n");
     return 0;
   }
-
-  for (i = 2; i <= target/2; i = i + 1) {
-    /* You'll want to keep this testing line in.  Otherwise it goes so
-       fast it can be hard to detect your code is running in
-       parallel. Also test with a large number (i.e. > 3000) */
-    printf("testing %llu\n", i);
-    if (target % i == 0) {
-      printf("%llu is a factor\n", i);
-    }
+  for( i = 0; i<numThreads;i++){
+    printf("running thread\n");
+    pthread_create(&tid[i],NULL,factor,i);
   }
+  for( i = 0;i<numThreads;i++){
+    pthread_join(tid[i],NULL);
+  }
+
+  // for (i = 2; i <= target/2; i = i + 1) {
+  //   /* You'll want to keep this testing line in.  Otherwise it goes so
+  //      fast it can be hard to detect your code is running in
+  //      parallel. Also test with a large number (i.e. > 3000) */
+  //   printf("testing %llu\n", i);
+  //   if (target % i == 0) {
+  //     printf("%llu is a factor\n", i);
+  //   }
+  // }
   return 0;
 }
 

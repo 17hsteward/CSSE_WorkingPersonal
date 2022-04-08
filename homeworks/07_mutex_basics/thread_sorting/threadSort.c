@@ -94,21 +94,34 @@ typedef struct arg{
    int* array;
    int start;
    int end;
+   suseconds_t time;
 };
 
 void* thread_dispatch(void* data) { 
   struct arg* thread = (struct arg*) data;
+  struct timeval startt, stopt;
   if(thread->group == 1){
-    printf("Sorting indexes %d-%d with brute force\n", thread->start,thread->end);
+    gettimeofday(&startt, NULL);
     BruteForceSort(thread->array+thread->start,thread->end-thread->start+1);
+    gettimeofday(&stopt, NULL);
+    thread->time = stopt.tv_usec - startt.tv_usec;
+    printf("Sorting indexes %d-%d with brute force done in %ld usecs\n", thread->start,thread->end,thread->time);
   }
   if(thread->group == 2){
-    printf("Sorting indexes %d-%d with bubble\n",thread->start,thread->end);
-    BubbleSort(thread->array+thread->start,thread->end-thread->start+1);
+     gettimeofday(&startt, NULL);
+     BubbleSort(thread->array+thread->start,thread->end-thread->start+1);
+     gettimeofday(&stopt, NULL);
+     thread->time = stopt.tv_usec - startt.tv_usec;
+     printf("Sorting indexes %d-%d with bubble done in %ld usecs\n", thread->start,thread->end,thread->time);
+    
   }
   if(thread->group == 3){
-    printf("Sorting indexes %d-%d with merge\n",thread->start,thread->end);
-    MergeSort(thread->array+thread->start,thread->end-thread->start+1);
+     gettimeofday(&startt, NULL);
+     MergeSort(thread->array+thread->start,thread->end-thread->start+1);
+     gettimeofday(&stopt, NULL);
+     thread->time = stopt.tv_usec - startt.tv_usec;
+     printf("Sorting indexes %d-%d with merge done in %ld usecs\n", thread->start,thread->end,thread->time);
+     
   }
 }
 
@@ -178,6 +191,53 @@ int main(int argc, char** argv) {
 
     // print out the result array so you can see the sorting is working
     // you might want to comment this out if you're testing with large data sets
+    int average1 = 0;
+    int min1 = 1000000000;
+    int max1 = -1;
+    int num1 = 0;
+    int average2 = 0;
+    int min2 = 1000000000;
+    int max2 = -1;
+    int num2 = 0;
+    int average3 = 0;
+    int min3 = 1000000000;
+    int max3 = -1;
+    int num3 = 0;
+    for(int i = 0; i<n;i++){
+      if(threads[i].group==1){
+        average1 += threads[i].time;
+        if(threads[i].time<min1){
+          min1 = threads[i].time;
+        }
+        if(threads[i].time>max1){
+          max1 = threads[i].time;
+        }
+        num1++;
+      }
+      if(threads[i].group==2){
+        average2 += threads[i].time;
+        if(threads[i].time<min2){
+          min2 = threads[i].time;
+        }
+        if(threads[i].time>max2){
+          max2 = threads[i].time;
+        }
+        num2++;
+      }
+      if(threads[i].group==3){
+        average3 += threads[i].time;
+        if(threads[i].time<min3){
+          min3 = threads[i].time;
+        }
+        if(threads[i].time>max3){
+          max3 = threads[i].time;
+        }
+        num3++;
+      }
+    }
+    printf("brute force avg %d min %d max %d\n",average1/num1,min1,max1);
+    printf("bubble avg %d min %d max %d\n",average2/num2,min2,max2);
+    printf("merge avg %d min %d max %d\n",average3/num3,min3,max3);
     printf("Result array:\n");
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < vals_per_thread; j++) {

@@ -5,19 +5,24 @@
 #include <unistd.h>
 
 #define NUM_THREADS 10
+
 /*
  * You can use the provided makefile to compile your code.
 */
 int total;
+pthread_mutex_t mutex;
 
 void *add10000(void *arg) {
+    pthread_mutex_lock(&mutex);
     for (int i = 0; i < 10000; i++) {
         total++;
     }
+    pthread_mutex_unlock(&mutex);
     return NULL;
 }
 
 int main(int argc, char **argv) {
+    pthread_mutex_init(&mutex, 0);
     total = 0;
     pthread_t threads[NUM_THREADS];
 
@@ -28,8 +33,9 @@ int main(int argc, char **argv) {
 
     for (i = 0; i < NUM_THREADS; i++) {
         pthread_join(threads[i], NULL);
+        
     }
-
+    pthread_mutex_destroy(&mutex);
     printf("Everything finished.  Final total %d\n", total);
 
     return 0;

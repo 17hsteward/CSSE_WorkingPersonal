@@ -100,16 +100,16 @@ void* thread_dispatch(void* data) {
   struct arg* thread = (struct arg*) data;
   for(int i = 0;i<n;i++){
   if(thread[i].group == 1){
-    printf("Sorting indexes  with brute force\n");
-    BruteForceSort(thread->array+thread->start,thread->end-thread->start);
+    printf("Sorting indexes %d-%d with brute force\n", thread[i].start,thread[i].end);
+    BruteForceSort(thread[i].array+thread[i].start,thread[i].end-thread[i].start+1);
   }
   if(thread[i].group == 2){
-    printf("Sorting indexes  with bubble\n");
-    BubbleSort(thread->array+thread->start,thread->end-thread->start);
+    printf("Sorting indexes %d-%d with bubble\n",thread[i].start,thread[i].end);
+    BubbleSort(thread[i].array+thread[i].start,thread[i].end-thread[i].start+1);
   }
   if(thread[i].group == 3){
-    printf("Sorting indexes  with merge\n");
-    MergeSort(thread->array+thread->start,thread->end-thread->start);
+    printf("Sorting indexes %d-%d with merge\n",thread[i].start,thread[i].end);
+    MergeSort(thread[i].array+thread[i].start,thread[i].end-thread[i].start+1);
   }
   }
 }

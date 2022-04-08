@@ -11,8 +11,8 @@
 #define MAX_VALS_PER_THREAD 1000
 // max threads allowed
 #define MAX_N_SIZE 100
-
-
+int vals_per_thread;
+int n;
 /* other global variable instantiations can go here */
 
 /* Uses a brute force method of sorting the input list. */
@@ -89,8 +89,29 @@ char* descriptions[] = {"brute force","bubble","merge"};
 // parameters and calls the correct sorting function
 //
 // you can do it a different way but I think this is easiest
-void* thread_dispatch(void* data) {
+typedef struct arg{
+   int group;
+   int* array;
+   int start;
+   int end;
+};
 
+void* thread_dispatch(void* data) { 
+  struct arg* thread = (struct arg*) data;
+  for(int i = 0;i<n;i++){
+  if(thread[i].group == 1){
+    printf("Sorting indexes  with brute force\n");
+    BruteForceSort(thread->array+thread->start,thread->end-thread->start);
+  }
+  if(thread[i].group == 2){
+    printf("Sorting indexes  with bubble\n");
+    BubbleSort(thread->array+thread->start,thread->end-thread->start);
+  }
+  if(thread[i].group == 3){
+    printf("Sorting indexes  with merge\n");
+    MergeSort(thread->array+thread->start,thread->end-thread->start);
+  }
+  }
 }
 
 int main(int argc, char** argv) {
@@ -102,7 +123,8 @@ int main(int argc, char** argv) {
 
     // I'm reading the value n (number of threads) for you off the
     // command line
-    int n = atoi(argv[1]);
+    n = atoi(argv[1]);
+    pthread_t tid[n];
     if(n <= 0 || n > MAX_N_SIZE || n % 3 != 0) {
         printf("bad n value (number of threads) %d.  Must be a multiple of 3.\n", n);
         exit(1);
@@ -110,7 +132,7 @@ int main(int argc, char** argv) {
 
     // I'm reading the number of values you want per thread
     // off the command line
-    int vals_per_thread = atoi(argv[2]);
+   vals_per_thread = atoi(argv[2]);
     if(vals_per_thread <= 0 || vals_per_thread > MAX_VALS_PER_THREAD) {
         printf("bad vals_per_thread value %d\n", vals_per_thread);
         exit(1);
@@ -133,9 +155,27 @@ int main(int argc, char** argv) {
     }
 
     // create your threads here
-
+    int group;
+    struct arg threads[n];
+    for(int i=0;i<n;i++){
+      if((i+1)%3==0){
+        threads[i].group = 3;
+      }
+      else if((i+1)%2==0){
+        threads[i].group = 2;
+      }
+      else{
+        threads[i].group = 1;
+      }
+      threads[i].start = i*vals_per_thread;
+      threads[i].end = (i+1)*vals_per_thread-1;
+      threads[i].array = data_array;
+      pthread_create(&tid[i],NULL,thread_dispatch,&threads[i]);
+    }
     // wait for them to finish
-
+    for(int i = 0; i<n; i++){
+      pthread_join(tid[i],NULL);
+    }
     // print out the algorithm summary statistics
 
     // print out the result array so you can see the sorting is working

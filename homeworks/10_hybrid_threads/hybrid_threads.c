@@ -42,9 +42,11 @@ annoying.  So please leave this value as it is and use MAX_THREADS
 // storage for your thread data
 //bool thread_bool[MAX_THREADS];
 ucontext_t threads[MAX_THREADS];
-ucontext_t parent;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+__thread ucontext_t parent;
 int threadCount = 0;
-int current = 0;
+__thread int current = 0;
 int thread_state[MAX_THREADS];
 // add additional constants and globals here as you need
 
@@ -142,6 +144,7 @@ void helper_func(void (*fun_ptr)(void*), void* parameter){
    finish_thread();
 }
 void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
+   pthread_mutex_lock(&lock);
    int ind = 0;
    if(threadCount >= MAX_THREADS)
    {
@@ -166,6 +169,7 @@ void create_new_parameterized_thread(void (*fun_ptr)(void*), void* parameter) {
    void(*cast_ptr)() =  helper_func;
    makecontext(&threads[ind],cast_ptr,2,fun_ptr,parameter);
    threadCount++;
+   pthread_mutex_unlock(&lock);
 }
 
 
@@ -200,26 +204,66 @@ printf("Starting threads...");
 schedule_threads()
 printf("All threads finished");
 */
-void schedule_hybrid_threads(int num_pthreads) {
+void* schedule_threads(void* arg) {
 
- while(threadCount !=0 ){ 
-      thread_state[current] == RUNNING;
-      swapcontext(&parent,&threads[current]);
-        if(thread_state[current] == FINISHED){
-          thread_state[current] = INVALID;
-          free(threads[current].uc_stack.ss_sp );
-        }
-      thread_state[current] == PAUSED;
-      current = current + 1;
-      while(thread_state[current]!=PAUSED&&threadCount!=0){
-        current=(current+1)%MAX_THREADS;
+ while(threadCount != 0 ){ 
+    for(int i = 0;i< MAX_THREADS;i++){
+    pthread_mutex_lock(&lock);
+    if(thread_state[i]==PAUSED){
+       thread_state[i]= RUNNING;
+       pthread_mutex_unlock(&lock);
+       current = i;
+       swapcontext(&parent,&threads[i]);
+       if(thread_state[i]==FINISHED){
+          pthread_mutex_lock(&lock);
+          thread_state[i]=INVALID;
+          pthread_mutex_unlock(&lock);
+          free(threads[i].uc_stack.ss_sp);
        }
-      if(current == MAX_THREADS){
-        current = 0;
-      }
+       else{
+          thread_state[i] = PAUSED;
+       }
+       pthread_mutex_lock(&lock);
+    }
+       pthread_mutex_unlock(&lock);
+    }
+    
+      // thread_state[current] == RUNNING;
+      // pthread_mutex_unlock(&lock);
+      // swapcontext(&parent,&threads[current]);
+      //   if(thread_state[current] == FINISHED){
+      //     pthread_mutex_lock(&lock);
+      //     thread_state[current] = INVALID;
+      //     free(threads[current].uc_stack.ss_sp );
+      //     pthread_mutex_unlock(&lock);
+      //   }
+      //   else
+      //   {
+      //      pthread_mutex_lock(&lock);
+      //      thread_state[current] = PAUSED;
+      //      pthread_mutex_unlock(&lock);
+      //   }
+      // current = current + 1;
+      // while(thread_state[current]!=PAUSED&&threadCount!=0){
+      //   current=(current+1)%MAX_THREADS;
+      //  }
+      // if(current == MAX_THREADS){
+      //   current = 0;
+      // }
    }
+   return NULL;
 }
 
+void schedule_hybrid_threads(int num_pthreads ){
+   pthread_t threads[num_pthreads];
+   for(int i = 0; i<num_pthreads;i++){
+      pthread_create(&threads[i],NULL,schedule_threads,NULL);
+   }
+   for(int i = 0;i<num_pthreads;i++ )
+   {
+      pthread_join(threads[i],NULL);
+   }
+}
 /*
 yield
 
@@ -260,7 +304,7 @@ void thread_function()
 
 x*/
 void yield() {
-   thread_state[current] == PAUSED;
+   //thread_state[current] = PAUSED;
    swapcontext(&threads[current],&parent);
 }
 
@@ -289,7 +333,10 @@ void thread_function()
 
 */
 void finish_thread() {
+   pthread_mutex_lock(&lock);
    threadCount = threadCount - 1;
+  
    thread_state[current] = FINISHED;
+    pthread_mutex_unlock(&lock);
    swapcontext(&threads[current],&parent);
 }

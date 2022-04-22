@@ -217,8 +217,8 @@ void* schedule_threads(void* arg) {
        if(thread_state[i]==FINISHED){
           pthread_mutex_lock(&lock);
           thread_state[i]=INVALID;
-          pthread_mutex_unlock(&lock);
           free(threads[i].uc_stack.ss_sp);
+          pthread_mutex_unlock(&lock);
        }
        else{
           thread_state[i] = PAUSED;

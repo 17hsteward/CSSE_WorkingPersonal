@@ -18,16 +18,40 @@
   section as the current thread finishes, bypassing priority rules.
   Solve this problem with mutexes/condition variables
  **/
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t conWork = PTHREAD_COND_INITIALIZER;
+int work = 0;
+int max = 0;
+int numb = 0;
 
 void *thread(void *arg)
 {
+    
 	int *num = (int *) arg;
+	
+	
+	
 	printf("%d wants to enter the critical section\n", *num);
-
+	if(*num>max){
+		max = *num;
+	}
+	numb++;
+	while(*num!= max){
+		
+		pthread_mutex_lock(&lock);
+		pthread_cond_wait(&conWork,&lock);
+		pthread_mutex_unlock(&lock);
+		if(numb = 1){
+			max = *num;
+		}
+		numb--;
+	}
+    pthread_mutex_lock(&lock);
 	printf("%d has entered the critical section\n", *num);
 	sleep(1);
 	printf("%d is finished with the critical section\n", *num);
-
+    pthread_cond_signal(&conWork);
+	pthread_mutex_unlock(&lock);
 	return NULL;
 }
 

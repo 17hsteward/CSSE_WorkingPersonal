@@ -54,7 +54,16 @@
 int DRUM = 0;
 int SING = 1;
 int GUIT = 2;
-
+int drum = 0;
+int sing = 0;
+int guit = 0;
+int instnum = 0;
+int done = 0;
+pthread_cond_t conDrum = PTHREAD_COND_INITIALIZER;
+pthread_cond_t conSing = PTHREAD_COND_INITIALIZER;
+pthread_cond_t conGuit = PTHREAD_COND_INITIALIZER;
+pthread_cond_t conH = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 char* names[] = {"drummer", "singer", "guitarist"};
 
 
@@ -64,10 +73,72 @@ char* names[] = {"drummer", "singer", "guitarist"};
 void* friend(void * kind_ptr) {
 	int kind = *((int*) kind_ptr);
 	printf("%s arrived\n", names[kind]);
-	printf("%s playing\n", names[kind]);
+  if(names[kind]=="drummer"){
+     pthread_mutex_lock(&lock);
+     while(drum == 1){
+       pthread_cond_wait(&conDrum,&lock);
+     }
+     drum = 1;
+     pthread_mutex_unlock(&lock);
+  }
+  if(names[kind]=="singer"){
+     pthread_mutex_lock(&lock);
+     while(sing == 1){
+       pthread_cond_wait(&conSing,&lock);
+     }
+     sing = 1;
+     pthread_mutex_unlock(&lock);
+  }
+  if(names[kind]=="guitarist"){
+     pthread_mutex_lock(&lock);
+     while(guit == 1){
+       pthread_cond_wait(&conGuit,&lock);
+     }
+     guit = 1;
+     pthread_mutex_unlock(&lock);
+  }
+  while(instnum!=3){
+    instnum++;
+    pthread_mutex_lock(&lock);
+     while(instnum != 3){
+       pthread_cond_wait(&conH,&lock);
+     }
+     if(instnum==3){
+     pthread_cond_signal(&conH);
+     }
+     pthread_mutex_unlock(&lock);
+  }
+  printf("%s playing\n", names[kind]);
 	sleep(1);
 	printf("%s finished playing\n", names[kind]);
+  if (done == 0){
+     instnum = 0;
+     done = 1;
+  }
 
+  if(names[kind]=="drummer"){
+    pthread_mutex_lock(&lock);
+    drum = 0;
+    pthread_cond_signal(&conDrum);
+    done++;
+    pthread_mutex_unlock(&lock);
+  }
+   if(names[kind]=="singer"){
+     pthread_mutex_lock(&lock);
+    sing = 0;
+    pthread_cond_signal(&conSing);
+    done++;
+    pthread_mutex_unlock(&lock);
+  }
+   if(names[kind]=="guitarist"){
+    pthread_mutex_lock(&lock);
+    guit = 0;
+    pthread_cond_signal(&conGuit);
+    done++;
+    pthread_mutex_unlock(&lock);
+  }
+  if(done == 4 )
+  done = 0;
 	return NULL;
 }
 

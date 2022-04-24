@@ -28,28 +28,69 @@
 
   This is similar to the readers/writers problem BTW.
  **/
+int numfinished = 0;
+int working = 0;
+int worker = 0;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t conWork = PTHREAD_COND_INITIALIZER;
 
 void* carpenter(void * ignored) {
-
+	while(working == 1 && worker != 1){
+		pthread_mutex_lock(&lock);
+        pthread_cond_wait(&conWork,&lock);
+		pthread_mutex_unlock(&lock);
+	}
+	worker = 1;
+	working = 1;
 	printf("starting carpentry\n");
 	sleep(1);
 	printf("finished carpentry\n");
+	numfinished++;
+	if(numfinished == NUM_CARP){
+		working = 0;
+		pthread_cond_broadcast(&conWork);
+		numfinished = 0;
+	}
 	return NULL;
 }
 
 void* painter(void * ignored) {
-
+    while(working == 1 && worker != 2){
+		pthread_mutex_lock(&lock);
+        pthread_cond_wait(&conWork,&lock);
+		pthread_mutex_unlock(&lock);
+	}
+	worker = 2;
+	working = 1;
 	printf("starting painting\n");
 	sleep(1);
 	printf("finished painting\n");
+	numfinished++;
+	if(numfinished == NUM_PAIN){
+		working = 0;
+		pthread_cond_broadcast(&conWork);
+		numfinished = 0;
+	}
 	return NULL;
 }
 
 void* decorator(void * ignored) {
-
+    while(working == 1 && worker != 3){
+		pthread_mutex_lock(&lock);
+        pthread_cond_wait(&conWork,&lock);
+		pthread_mutex_unlock(&lock);
+	}
+	worker = 3;
+	working = 1;
 	printf("starting decorating\n");
 	sleep(1);
 	printf("finished decorating\n");
+	numfinished++;
+	if(numfinished == NUM_DECO){
+		working = 0;
+		pthread_cond_broadcast(&conWork);
+	    numfinished = 0;
+	}
 	return NULL;
 }
 

@@ -8,6 +8,7 @@
 #define NUM_BATCHES 6
 #define NUM_LOAVES_TO_EAT 14
 
+
 /**
   This system has four threads: the duck, cat, and dog that eat 
   bread, and the little red hen that makes the bread. The little
@@ -32,6 +33,12 @@
  **/
 
 int numLoaves;
+int numanimals = 0;
+pthread_cond_t conKit = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t conHen = PTHREAD_COND_INITIALIZER;
+pthread_cond_t conCook = PTHREAD_COND_INITIALIZER;
+int done = 0;
 
 void *littleRedHenThread(void *arg) {
 	char *name = (char*)arg;
@@ -40,8 +47,15 @@ void *littleRedHenThread(void *arg) {
 	for (batch = 1; batch <= 6; batch++) {
 		sleep(2);  // just makes it obvious that it won't work without
 		// condition variables
+		pthread_mutex_lock(&lock);
+		while(numLoaves>0){
+			pthread_cond_wait(&conHen,&lock);
+		}
+		pthread_mutex_unlock(&lock);
 		numLoaves += 7;
 		printf("%-20s: A fresh batch of bread is ready.\n", name);
+		done = 1;
+        pthread_cond_signal(&conCook);
 	}
 
 	printf("%-20s: I'm fed up with feeding you lazy animals! "
@@ -50,15 +64,33 @@ void *littleRedHenThread(void *arg) {
 }
 
 void *otherAnimalThread(void *arg) {
+	
 	char *name = (char*)arg;
 	int numLoavesEaten = 0;
 	while (numLoavesEaten < NUM_LOAVES_TO_EAT) {
+    while(numanimals == 1){
+		pthread_mutex_lock(&lock);
+		pthread_cond_wait(&conKit,&lock);
+		pthread_mutex_unlock(&lock);
+	}
+	numanimals = 1;
 		if (numLoaves <= 0) {
+			pthread_mutex_lock(&lock);
 			printf("%-20s: Hey, Little Red Hen, make some more bread!\n", name);
+			done = 0;
+			pthread_cond_signal(&conHen);
+			while(done == 0){
+				pthread_cond_wait(&conCook,&lock);
+			}
+			pthread_mutex_unlock(&lock);
 		}
+		pthread_mutex_lock(&lock);
 		numLoaves--;
 		printf("%-20s: Mmm, this loaf is delicious.\n", name);
 		numLoavesEaten++;
+		numanimals = 0;
+		pthread_cond_signal(&conKit);
+		pthread_mutex_unlock(&lock);
 		if (random() > random()) {  // Adds variety to output
 			sleep(1);
 		}

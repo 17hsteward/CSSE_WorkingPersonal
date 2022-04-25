@@ -22,7 +22,6 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t conWork = PTHREAD_COND_INITIALIZER;
 int work = 0;
 int max = 0;
-int numb = 0;
 
 void *thread(void *arg)
 {
@@ -35,16 +34,10 @@ void *thread(void *arg)
 	if(*num>max){
 		max = *num;
 	}
-	numb++;
 	while(*num!= max){
-		
 		pthread_mutex_lock(&lock);
 		pthread_cond_wait(&conWork,&lock);
 		pthread_mutex_unlock(&lock);
-		if(numb = 1){
-			max = *num;
-		}
-		numb--;
 	}
     pthread_mutex_lock(&lock);
 	printf("%d has entered the critical section\n", *num);

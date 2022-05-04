@@ -5,6 +5,7 @@
 int onedone = 0;
 int twodone = 0;
 int threedone = 0;
+double f = 0;
 pthread_cond_t conO = PTHREAD_COND_INITIALIZER;
 pthread_cond_t conT = PTHREAD_COND_INITIALIZER;
 pthread_cond_t conH = PTHREAD_COND_INITIALIZER;
@@ -12,6 +13,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void *thread(void *arg)
 {
+        printf("%d\n",8|1*10%(4+3)*(4|1));
         int *num = (int *)arg;
         
         printf("%d wants to enter the critical section\n", *num);

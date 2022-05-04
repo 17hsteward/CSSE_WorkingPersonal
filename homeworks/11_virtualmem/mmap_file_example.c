@@ -10,7 +10,7 @@
 #define STACKHEAP_MEM_START 0xf9f8c000
 
 void main() {
-
+     
     //create the file and use lseek to ensure that it has enough space
     //to contain the full page
     int fd = open("page_0.dat", O_RDWR | O_CREAT, S_IRWXU);

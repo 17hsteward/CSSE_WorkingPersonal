@@ -20,9 +20,10 @@
  **/
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t conWork = PTHREAD_COND_INITIALIZER;
+pthread_cond_t conCheck = PTHREAD_COND_INITIALIZER;
 int done = 0;
-int* max = 0;
-int* array[6];
+int max = 0;
+int array[6];
 int i = 5;
 int j = 5;
 int currentrun = 0;
@@ -32,7 +33,7 @@ void *thread(void *arg)
 {
  
 	int *num = (int *) arg;
-	array[*num-1] = num;
+	array[*num-1] = *num;
 	i = 5;
 		while(array[i] == 0)
 		{
@@ -42,24 +43,31 @@ void *thread(void *arg)
 	
 	
 	printf("%d wants to enter the critical section\n", *num);
-	 while(num!= max && currentrun == 1){
+	while(currentrun == 1){
+     pthread_mutex_lock(&lock);
+	 pthread_cond_wait(&conCheck,&lock);
+    pthread_mutex_unlock(&lock);
+	 while(*num!= max){
 	 	pthread_mutex_lock(&lock);
 		pthread_cond_wait(&conWork,&lock);
 		pthread_mutex_unlock(&lock);
 	 }
-	currentrun = 1;
+	 currentrun =1;
+	 
+	}
 	array[*num-1] = 0;
 	j = 5;
-		while(array[j] == 0)
-		{
-			j--;
-		}
-		max = array[j];
+	while(array[j] == 0)
+	{
+		j--;
+	}
+	max = array[j];
     pthread_mutex_lock(&lock);
 	printf("%d has entered the critical section\n", *num);
 	sleep(1);
 	printf("%d is finished with the critical section\n", *num);
     currentrun = 0;
+	pthread_cond_signal(&conCheck);
 	pthread_cond_signal(&conWork);
 	pthread_mutex_unlock(&lock);
 	return NULL;
